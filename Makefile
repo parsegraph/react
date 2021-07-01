@@ -1,4 +1,4 @@
-DIST_NAME = TODO-PACKAGE-NAME
+DIST_NAME = react
 
 SCRIPT_FILES = \
 	src/$(DIST_NAME).ts
