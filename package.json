@@ -1,9 +1,9 @@
 {
   "name": "parsegraph-react",
-  "version": "1.5.7-dev",
+  "version": "1.5.8-dev",
   "description": "React on Parsegraph",
   "main": "dist/parsegraph-react.js",
-  "types": "dist/react.d.ts",
+  "types": "dist/parsegraph-react.d.ts",
   "scripts": {
     "coverage": "nyc npm run test",
     "test": "mocha -r @babel/register -r jsdom-global/register --recursive",
