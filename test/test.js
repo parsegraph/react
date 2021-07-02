@@ -1,5 +1,5 @@
 var assert = require("assert");
-import todo from "../dist/react";
+import todo from "../dist/parsegraph-react";
 
 describe("Package", function () {
   it("works", ()=>{

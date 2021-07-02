@@ -1,0 +1,21 @@
+{
+  "name": "parsegraph-react",
+  "version": "1.5.6",
+  "description": "React on Parsegraph",
+  "main": "dist/parsegraph-react.js",
+  "types": "dist/react.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/parsegraph/react.git"
+  },
+  "author": "Rainback, Inc.",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/parsegraph/react/issues"
+  },
+  "homepage": "https://github.com/parsegraph/react#readme",
+  "dependencies":{
+    "parsegraph-node": "^2.2.2",
+    "react": "^17.0.2"
+  }
+}
