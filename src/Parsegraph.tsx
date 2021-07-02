@@ -177,7 +177,7 @@ const hostConfig = {
     //console.log("queueMicrotask", fn);
   },
 
-  isPrimaryRenderer:false,
+  isPrimaryRenderer:true,
 
   noTimeout:false,
 
