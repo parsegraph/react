@@ -14,9 +14,6 @@ declare global {
 
 import Reconciler from 'react-reconciler';
 
-const rootHostContext = {};
-const childHostContext = {};
-
 class RenderNode {
   node:Node<DefaultNodeType>|null;
   dir:Direction = Direction.NULL;
@@ -129,8 +126,7 @@ const hostConfig = {
     }
   },
 
-  getRootHostContext() {//rootContainer) {
-    //console.log("getRootHostContext", rootContainer);
+  getRootHostContext(rootHostContext:any):any {
     return rootHostContext;
   },
 
@@ -141,11 +137,12 @@ const hostConfig = {
 
   getChildHostContext(parentHostContext:any, type:string, rootContainer:any) {
     //console.log("getChildHostContext", arguments);
-    return childHostContext;
+    return {};
   },
 
-  getPublicInstance(instance:any) {
-    //console.log("getPublicInstance", instance);
+  getPublicInstance(instance:any):any {
+    console.log("getPublicInstance", instance);
+    return instance;
   },
 
   prepareForCommit(containerInfo:any):any {

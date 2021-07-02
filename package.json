@@ -1,6 +1,6 @@
 {
   "name": "parsegraph-react",
-  "version": "1.5.10-dev",
+  "version": "1.6.1-dev",
   "description": "React on Parsegraph",
   "main": "dist/parsegraph-react.js",
   "types": "dist/parsegraph-react.d.ts",
