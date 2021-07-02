@@ -21,7 +21,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: npm ci
-    - run: npm i --no-save react
+    - run: npm i --no-save react react-reconciler @types/react @types/react-reconciler
     - run: make tar
     - uses: actions/upload-artifact@v2
       with:
