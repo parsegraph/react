@@ -79,7 +79,7 @@
     "raw-loader": "^4.0.1",
     "ts-mocha": "^8.0.0",
     "webgl-mock": "^0.1.7",
-    "parsegraph-node": "^2.2.2",
+    "parsegraph-node": "^2.2.3",
     "react": "^17.0.2"
   }
 }
