@@ -127,6 +127,7 @@ const hostConfig = {
   },
 
   getRootHostContext(rootHostContext:any):any {
+    console.log("getRootHostContext", arguments);
     return rootHostContext;
   },
 
@@ -136,12 +137,12 @@ const hostConfig = {
   },
 
   getChildHostContext(parentHostContext:any, type:string, rootContainer:any) {
-    //console.log("getChildHostContext", arguments);
+    console.log("getChildHostContext", arguments);
     return {};
   },
 
   getPublicInstance(instance:any):any {
-    console.log("getPublicInstance", instance);
+    console.log("getPublicInstance", arguments);
     return instance;
   },
 
