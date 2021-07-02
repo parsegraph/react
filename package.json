@@ -1,6 +1,6 @@
 {
   "name": "parsegraph-react",
-  "version": "1.5.9-dev",
+  "version": "1.5.10-dev",
   "description": "React on Parsegraph",
   "main": "dist/parsegraph-react.js",
   "types": "dist/parsegraph-react.d.ts",
@@ -34,7 +34,10 @@
     "reportDir": "dist/coverage"
   },
   "peerDependencies": {
-    "react": "^17.0.2"
+    "@types/react": "^17.0.13",
+    "@types/react-reconciler": "^0.26.1",
+    "react": "^17.0.2",
+    "react-reconciler": "^0.26.2"
   },
   "dependencies": {
     "@atscm/esdoc-typescript-plugin": "^0.1.0",
@@ -48,8 +51,6 @@
     "@istanbuljs/nyc-config-babel": "^3.0.0",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^8.2.0",
-    "@types/react": "^17.0.13",
-    "@types/react-reconciler": "^0.26.1",
     "@typescript-eslint/eslint-plugin": "^4.11.0",
     "@typescript-eslint/parser": "^4.11.0",
     "babel-core": "^6.26.3",
@@ -72,7 +73,6 @@
     "parsegraph-testsuite": "^1.4.1",
     "prettier": "2.1.2",
     "raw-loader": "^4.0.1",
-    "react-reconciler": "^0.26.2",
     "source-map-loader": "^1.0.2",
     "source-map-support": "^0.5.19",
     "ts-loader": "^8.0.12",
