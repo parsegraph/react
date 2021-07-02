@@ -12,6 +12,8 @@ declare global {
   }
 }
 
+const NO_CONTEXT = {};
+
 import Reconciler from 'react-reconciler';
 
 class RenderNode {
@@ -126,9 +128,8 @@ const hostConfig = {
     }
   },
 
-  getRootHostContext(rootHostContext:any):any {
-    console.log("getRootHostContext", arguments);
-    return rootHostContext;
+  getRootHostContext():any {
+    return NO_CONTEXT;
   },
 
   finalizeInitialChildren(instance:RenderNode, type:string, props:any, rootContainer:any, hostContext:any) {
@@ -136,9 +137,8 @@ const hostConfig = {
     return true;
   },
 
-  getChildHostContext(parentHostContext:any, type:string, rootContainer:any) {
-    console.log("getChildHostContext", arguments);
-    return {};
+  getChildHostContext() {
+    return NO_CONTEXT;
   },
 
   getPublicInstance(instance:any):any {
