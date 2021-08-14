@@ -21,7 +21,7 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     - run: NODE_ENV=production npm ci --omit=dev
-    - run: NODE_ENV=production npm i --no-save react react-reconciler @types/react @types/react-reconciler
+    - run: NODE_ENV=production npm i --no-save react react-reconciler @types/react @types/react-reconciler parsegraph-checkglerror
     - run: NODE_ENV=production make clean build-prod
     - run: NODE_ENV=production make tar-prod
     - uses: actions/upload-artifact@v2

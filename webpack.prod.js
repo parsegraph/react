@@ -1,6 +1,20 @@
 const path = require("path");
 
 module.exports = {
+  externals: {
+    "parsegraph-checkglerror":{
+      commonjs:"parsegraph-checkglerror",
+      commonjs2:"parsegraph-checkglerror",
+      amd:"parsegraph-checkglerror",
+      root:"parsegraph"
+    },
+    "react":{
+      commonjs:"react",
+      commonjs2:"react",
+      amd:"react",
+      root:"React"
+    },
+  },
   entry: path.resolve(__dirname, "src/index.ts"),
   output: {
     path: path.resolve(__dirname, "dist-prod"),
