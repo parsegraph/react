@@ -1,6 +1,6 @@
 {
   "name": "parsegraph-react",
-  "version": "1.6.8-dev",
+  "version": "1.6.9-dev",
   "description": "React on Parsegraph",
   "main": "dist/parsegraph-react.js",
   "types": "dist/parsegraph-react.d.ts",
@@ -69,7 +69,7 @@
     "mocha": "^8.2.1",
     "nyc": "^15.1.0",
     "openssl": "^1.1.0",
-    "parsegraph-node": "^2.2.9-dev",
+    "parsegraph-node": "^2.2.10-dev",
     "parsegraph-testsuite": "^1.4.1",
     "prettier": "2.1.2",
     "raw-loader": "^4.0.1",
