@@ -1,13 +1,17 @@
 import React from 'react';
 import {Caret, Window, World, addEventMethod, TimingBelt, Node, DefaultNodeType, Viewport} from 'parsegraph-node';
+import { Alignment, readAlignment } from 'parsegraph-layout';
 
 import Direction, {readDirection, nameDirection} from 'parsegraph-direction';
+import ReactDOM from 'react-dom';
+import Color from 'parsegraph-color';
 
 declare global {
   namespace JSX {
     interface IntrinsicElements {
       bud: any;
       block: any;
+      element: any;
     }
   }
 }
@@ -15,17 +19,23 @@ declare global {
 const NO_CONTEXT = {};
 
 import Reconciler from 'react-reconciler';
+import WindowNode from 'parsegraph-node/dist/WindowNode';
 
 class RenderNode {
   node:Node<DefaultNodeType>|null;
   dir:Direction = Direction.NULL;
   pull:Direction = Direction.NULL;
   connect:Direction = Direction.NULL;
+  align:Alignment = Alignment.NONE;
 
   constructor(node:Node<DefaultNodeType>|null) {
     this.node = node;
   }
 };
+
+function isParsegraphType(type:string) {
+  return type === "element" || type === "block" || type === "bud";
+}
 
 const hostConfig = {
   supportsMutation: true,
@@ -33,25 +43,43 @@ const hostConfig = {
   supportsPersistence: false,
 
   createInstance(type:any, props:any, rootContainer:any, hostContext:any):RenderNode {
-    //console.log("createInstance", type, props, rootContainer, hostContext, arguments);
+    console.log("createInstance", type, props, rootContainer, hostContext, arguments);
     const caret = new Caret(type);
     if(props.label != null) {
       caret.label(props.label);
     }
 
+    if (!isParsegraphType(type)) {
+      return new RenderNode(null);
+    }
+
     const node = new RenderNode(caret.root());
     node.dir = props.dir !== undefined ? readDirection(props.dir) : Direction.NULL;
     node.connect = props.connect !== undefined ? readDirection(props.connect) : Direction.NULL;
+    node.align = props.align !== undefined ? readAlignment(props.align) : Alignment.NONE;
     node.dir && console.log("Dir", props.dir, nameDirection(node.dir));
     node.connect && console.log("Connect", props.connect, nameDirection(node.connect));
+    hostContext.caret = caret;
     if (props.pull !== undefined) {
       caret.pull(props.pull);
     }
     if (props.onClick !== undefined) {
       caret.onClick(props.onClick);
-    } else {
-      caret.node().setLabel("Edit me");
-      caret.node().realLabel().setEditable(true);
+    }
+    if (type === "element") {
+      const contentFunc = props.content;
+      const node = caret.node();
+      caret.node().setElement(()=>{
+        const container = document.createElement('div');
+        ReactDOM.render(contentFunc(), container, ()=>{
+          new ResizeObserver(()=>{
+            console.log(rootContainer, hostContext);
+            node.layoutHasChanged();
+            rootContainer.scheduleRepaint();
+          }).observe(container);
+        });
+        return container;
+      });
     }
 
     return node;
@@ -62,12 +90,15 @@ const hostConfig = {
   },
 
   shouldSetTextContent() {//type, props) {
-    //console.log("shouldSetTextContent", type, props);
+    console.log("shouldSetTextContent", arguments);
     return false;
   },
 
   prepareUpdate(node:RenderNode, type:any, oldProps:any, newProps:any) {
-    //console.log("prepareUpdate", arguments);
+    if (!node.node) {
+      return false;
+    }
+    console.log("prepareUpdate", arguments);
     const diff = [];
     if (oldProps.onClick !== newProps.onClick) {
       diff.push("onClick");
@@ -75,11 +106,14 @@ const hostConfig = {
     if (oldProps.label !== newProps.label) {
       diff.push("label");
     }
+    if (type === "element" && "content" in newProps) {
+      diff.push("content");
+    }
     return diff.length > 0 ? diff : undefined;
   },
 
   commitUpdate(node:RenderNode, updatePayload:Array<string>, type:any, oldProps:any, props:any) {
-    //console.log("commitUpdate", arguments);
+    console.log("commitUpdate", arguments);
     if (!node.node || !updatePayload) {
       return;
     }
@@ -92,23 +126,42 @@ const hostConfig = {
       case "label":
         n.setLabel(props.label);
         break;
+      case "content":
+        if (type === "element") {
+          const contentFunc = props.content;
+          node.node.setElement(()=>{
+            const container = document.createElement('div');
+            ReactDOM.render(contentFunc(), container, ()=>{
+              new ResizeObserver(()=>{
+                node.node.layoutHasChanged();
+              }).observe(container);
+            });
+            return container;
+          });
+          /*node.node._windowElement.forEach(elem=>{
+            elem.remove();
+          });
+          node.node._windowElement.clear();*/
+          node.node.layoutHasChanged();
+        }
+        break;
       }
     });
   },
 
   appendChild(parentInstance:RenderNode, child:RenderNode) {
-    //console.log("appendChild", arguments);
+    console.log("appendChild", arguments);
     hostConfig.appendInitialChild(parentInstance, child);
   },
 
-  insertBefore(parentInstance:RenderNode, child:RenderNode) {
-    //console.log("insertBefore", arguments);
+  insertBefore(parentInstance:RenderNode, child:RenderNode, beforeChild:RenderNode) {
+    console.log("insertBefore", arguments);
     hostConfig.appendInitialChild(parentInstance, child);
   },
 
   appendInitialChild(parentInstance:RenderNode, child:RenderNode) {
     try {
-      //console.log("appendInitialChild", arguments);
+      console.log("appendInitialChild", arguments);
       let dir = child.dir;
       if (dir === Direction.NULL) {
         dir = parentInstance.connect;
@@ -122,6 +175,7 @@ const hostConfig = {
           trueParent = trueParent.nodeAt(dir);
         }
         trueParent.connectNode(dir, child.node);
+        trueParent.setNodeAlignmentMode(dir, child.align);
       }
     } catch (ex) {
       //console.log(ex);
@@ -129,16 +183,20 @@ const hostConfig = {
   },
 
   getRootHostContext():any {
-    return NO_CONTEXT;
+    console.log("Roothostcontext", arguments);
+    return {isElement:false};
   },
 
   finalizeInitialChildren(instance:RenderNode, type:string, props:any, rootContainer:any, hostContext:any) {
-    //console.log("finalizeInitialChildren", arguments);
+    console.log("finalizeInitialChildren", arguments);
     return true;
   },
 
-  getChildHostContext() {
-    return NO_CONTEXT;
+  getChildHostContext(parentHostContext:any, type:string, rootContainer:any) {
+    if (isParsegraphType(type)) {
+      return {isElement:type==="element", parent:parentHostContext};
+    }
+    return parentHostContext;
   },
 
   getPublicInstance(instance:any):any {
@@ -147,18 +205,23 @@ const hostConfig = {
   },
 
   prepareForCommit(containerInfo:any):any {
-    //console.log("prepareForCommit", arguments);
+    console.log("prepareForCommit", arguments);
     return null;
   },
 
+  commitTextUpdate(node:RenderNode, oldLabel:string, newLabel:string):any {
+    console.log("CommitTextUpdate", arguments)
+    node.node && node.node.setLabel(newLabel);
+  },
+
   resetAfterCommit(viewport:Viewport) {
-    //console.log("resetAfterCommit");
+    console.log("resetAfterCommit");
     viewport.scheduleRepaint();
     viewport.world().scheduleRepaint();
   },
 
   preparePortalMount(containerInfo:any) {
-    //console.log("preparePortalMount", containerInfo);
+    console.log("preparePortalMount", containerInfo);
   },
 
   now() {
@@ -177,22 +240,26 @@ const hostConfig = {
     //console.log("queueMicrotask", fn);
   },
 
-  isPrimaryRenderer:true,
+  isPrimaryRenderer:false,
 
   noTimeout:false,
 
   clearContainer(container:Viewport) {
+    console.log("clearContainer");
     const roots = container.world()._worldRoots.concat([]);
     roots.forEach(root=>container.world().removePlot(root));
   },
 
-  removeChild(parent:RenderNode, child:RenderNode) {
+  removeChild(_:RenderNode, child:RenderNode) {
     console.log("removeChild", arguments);
+    child.node.forEachNode((n:WindowNode)=>n._windowElement.forEach(elem=>{
+      elem.style.display = "none";
+    }));
     child.node && child.node.disconnectNode();
   },
 
   appendChildToContainer(container:Viewport, node:RenderNode) {
-    //console.log("appendChildToContainer", arguments);
+    console.log("appendChildToContainer", arguments);
     if (node.node) {
       container.world().plot(node.node);
       container.showInCamera(node.node);
@@ -200,14 +267,14 @@ const hostConfig = {
   },
 
   removeChildFromContainer(container:Viewport, node:RenderNode) {
-    //console.log("removeChildFromContainer", arguments);
+    console.log("removeChildFromContainer", arguments);
     if (container && node && node.node) {
       container.world().removePlot(node.node);
     }
   },
 
   commitMount() {
-    //console.log("commitMount", arguments);
+    console.log("commitMount", arguments);
     //container.world().plot(node.node);
     //container.showInCamera(node.node);
   }
@@ -217,14 +284,16 @@ const ParsegraphRenderer = Reconciler(hostConfig);
 
 interface ParsegraphProps {
   children:JSX.Element;
+  display?:string;
 }
 
-export default class Parsegraph extends React.Component {
+export default class Parsegraph extends React.Component<ParsegraphProps> {
   _mainNode:any;
   _listener?:Function;
   _belt?:TimingBelt;
   _viewport?:Viewport;
   _container?:HTMLElement|null;
+  _inline:Boolean;
 
   updateContainer(clear?:boolean) {
     ParsegraphRenderer.updateContainer(clear ? null : this.props.children, this._mainNode, this, ()=>{
@@ -232,27 +301,31 @@ export default class Parsegraph extends React.Component {
     });
   }
 
+  isInline():boolean {
+    return this.props.display === "inline";
+  }
+
+  isFullscreen():boolean {
+    return !this.isInline();
+  }
+
   componentDidMount() {
-    var window = new Window();
-    var belt = new TimingBelt();
+    const window = new Window();
+    const belt = new TimingBelt();
     belt.addWindow(window);
     this._belt = belt;
 
-    var world = new World();
-    var viewport = new Viewport(window, world);
+    const world = new World();
+    const viewport = new Viewport(world);
     this._viewport = viewport;
-    window.addComponent(viewport.component());
+    if (this.isInline()) {
+      window.setBackground(new Color(0, 0, 0, 0));
+      this._viewport.setSingleScreen(true);
+    }
+    window.addComponent(viewport);
 
     this._mainNode = ParsegraphRenderer.createContainer(viewport, 1, false, null);
 
-    if (this._belt) {
-      this._listener = addEventMethod(
-        top.window,
-        "resize",
-        this._belt.scheduleUpdate,
-        this._belt
-      );
-    }
     this.updateContainer();
     if (this._container && this._viewport) {
       console.log("ADD mount");
@@ -276,8 +349,15 @@ export default class Parsegraph extends React.Component {
     }
   }
 
+  getContainerStyle() {
+    if (this.isInline()) {
+      return {};
+    }
+    return {width:"100%", height:"100%"};
+  }
+
   render() {
-    return <div className="parsegraph_Window" ref={(container)=>{
+    return <div style={this.getContainerStyle()} ref={(container)=>{
       this._container = container;
     }}/>;
   }

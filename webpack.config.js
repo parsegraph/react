@@ -15,10 +15,14 @@ module.exports = {
       root:"React"
     },
   },
-  entry: path.resolve(__dirname, "src/index.ts"),
+  entry: {
+    main:path.resolve(__dirname, "src/index.ts"),
+    element:path.resolve(__dirname, "src/demo/element.tsx"),
+    iframes:path.resolve(__dirname, "src/demo/iframes.tsx")
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "parsegraph-react.js",
+    filename: "parsegraph-react.[name].js",
     globalObject: "this",
     library: "parsegraph",
     libraryTarget: "umd",

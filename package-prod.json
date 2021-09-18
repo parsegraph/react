@@ -19,6 +19,6 @@
     "react-reconciler": "^0.26.2"
   },
   "dependencies":{
-    "parsegraph-node": "^2.2.10"
+    "parsegraph-node": "^2.2.11"
   }
 }

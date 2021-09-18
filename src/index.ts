@@ -1,7 +1,4 @@
-import RenderParsegraph from './RenderParsegraph';
 import Parsegraph from './Parsegraph';
-
-export {
-  RenderParsegraph,
-  Parsegraph
-}
+export default Parsegraph;
+import ElementDemo from './demo/element';
+export {ElementDemo};
