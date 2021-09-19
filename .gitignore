@@ -1,3 +1,7 @@
+# ZIP files and archives
+*.zip
+*.tgz
+
 # Logs
 logs
 *.log
