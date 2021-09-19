@@ -27,9 +27,125 @@ class RenderNode {
   pull:Direction = Direction.NULL;
   connect:Direction = Direction.NULL;
   align:Alignment = Alignment.NONE;
+  nodeChildren:RenderNode[];
 
   constructor(node:Node<DefaultNodeType>|null) {
     this.node = node;
+    this.nodeChildren = [];
+  }
+
+  getChildDirection(child:RenderNode) {
+    let dir = child.dir;
+    if (dir === Direction.NULL) {
+      dir = this.connect;
+    }
+    if (dir === Direction.NULL) {
+      dir = Direction.FORWARD;
+    }
+    return dir;
+  }
+
+  getLastChild() {
+    for(let i = this.nodeChildren.length - 1; i >= 0; --i) {
+      if (this.nodeChildren[i] && this.nodeChildren[i].node) {
+        return this.nodeChildren[i];
+      }
+    }
+    return null;
+  }
+
+  appendChild(child:RenderNode) {
+    let dir = this.getChildDirection(child);
+    console.log("appending", nameDirection(dir), child, " to ", this);
+
+    let connectingSite:RenderNode = this.getLastChild() || this;
+    if (child.node && connectingSite.node) {
+      connectingSite.node.connectNode(dir, child.node);
+      connectingSite.node.setNodeAlignmentMode(dir, child.align);
+      if (connectingSite.pull) {
+        new Caret(connectingSite.node).pull(connectingSite.pull);
+      }
+    }
+
+    this.nodeChildren.push(child);
+  }
+
+  getChildIndex(child:RenderNode) {
+    for(let i = 0; i < this.nodeChildren.length; ++i) {
+      if (this.nodeChildren[i] === child) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+
+  insertBefore(child:RenderNode, refChild:RenderNode) {
+    console.log("appending", child, " to ", this);
+
+    const refIndex = this.getChildIndex(refChild);
+    if (refIndex == 0) {
+      // Adding to front
+      refChild.node.disconnectNode();
+
+      let dir = this.getChildDirection(child);
+      this.node.connectNode(dir, child.node);
+      this.node.setNodeAlignmentMode(dir, child.align);
+      if (this.pull) {
+        new Caret(this.node).pull(this.pull);
+      }
+
+      dir = this.getChildDirection(refChild);
+      child.node.connectNode(dir, refChild.node);
+      child.node.setNodeAlignmentMode(dir, refChild.align);
+      if (child.pull) {
+        new Caret(child.node).pull(child.pull);
+      }
+
+      this.nodeChildren.unshift(child);
+      return;
+    }
+
+    const origParent = this.nodeChildren[refIndex - 1];
+    refChild.node.disconnectNode();
+
+    let dir = this.getChildDirection(child);
+    origParent.node.connectNode(dir, child.node);
+    origParent.node.setNodeAlignmentMode(dir, child.align);
+    if (origParent.pull) {
+      new Caret(origParent.node).pull(origParent.pull);
+    }
+
+    dir = this.getChildDirection(refChild);
+    child.node.connectNode(dir, refChild.node);
+    child.node.setNodeAlignmentMode(dir, refChild.align);
+    if (child.pull) {
+      new Caret(child.node).pull(child.pull);
+    }
+
+    this.nodeChildren.splice(refIndex, 0, child);
+  }
+
+  removeChild(child:RenderNode) {
+    console.log("removeChild", arguments);
+    let childIndex = this.getChildIndex(child);
+    if (childIndex < this.nodeChildren.length - 1) {
+      let nextChild = this.nodeChildren[childIndex + 1];
+      let origParent = child.node.parentNode();
+      child.node.disconnectNode();
+      nextChild.node.disconnectNode();
+      let dir = this.getChildDirection(nextChild);
+      origParent.connectNode(dir, nextChild.node);
+      origParent.setNodeAlignmentMode(dir, nextChild.align);
+      // Get pull right here
+    } else {
+      child.node.disconnectNode();
+    }
+    child.node.forEachNode((n:WindowNode)=>n._windowElement.forEach(elem=>{
+      elem.style.display = "none";
+    }));
+
+    this.nodeChildren.splice(childIndex, 1);
   }
 };
 
@@ -62,6 +178,7 @@ const hostConfig = {
     hostContext.caret = caret;
     if (props.pull !== undefined) {
       caret.pull(props.pull);
+      node.pull = props.pull;
     }
     if (props.onClick !== undefined) {
       caret.onClick(props.onClick);
@@ -156,30 +273,11 @@ const hostConfig = {
 
   insertBefore(parentInstance:RenderNode, child:RenderNode, beforeChild:RenderNode) {
     console.log("insertBefore", arguments);
-    hostConfig.appendInitialChild(parentInstance, child);
+    parentInstance.insertBefore(child, beforeChild);
   },
 
   appendInitialChild(parentInstance:RenderNode, child:RenderNode) {
-    try {
-      console.log("appendInitialChild", arguments);
-      let dir = child.dir;
-      if (dir === Direction.NULL) {
-        dir = parentInstance.connect;
-      }
-      if (dir === Direction.NULL) {
-        dir = Direction.FORWARD;
-      }
-      let trueParent = parentInstance.node;
-      if (trueParent && child.node) {
-        while(trueParent.hasNode(dir)) {
-          trueParent = trueParent.nodeAt(dir);
-        }
-        trueParent.connectNode(dir, child.node);
-        trueParent.setNodeAlignmentMode(dir, child.align);
-      }
-    } catch (ex) {
-      //console.log(ex);
-    }
+    parentInstance.appendChild(child);
   },
 
   getRootHostContext():any {
@@ -250,12 +348,8 @@ const hostConfig = {
     roots.forEach(root=>container.world().removePlot(root));
   },
 
-  removeChild(_:RenderNode, child:RenderNode) {
-    console.log("removeChild", arguments);
-    child.node.forEachNode((n:WindowNode)=>n._windowElement.forEach(elem=>{
-      elem.style.display = "none";
-    }));
-    child.node && child.node.disconnectNode();
+  removeChild(parentNode:RenderNode, child:RenderNode) {
+    parentNode.removeChild(child);
   },
 
   appendChildToContainer(container:Viewport, node:RenderNode) {

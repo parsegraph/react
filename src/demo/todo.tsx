@@ -1,6 +1,7 @@
-import React, {useState, useEffect, FormEvent, useRef} from 'react';
+import React, {useState, useEffect, FormEvent, useRef, ReactElement} from 'react';
 import Parsegraph from '../Parsegraph';
 import ReactDOM from 'react-dom';
+import ReactIs from 'react-is';
 
 interface ListProps {
     children:any;
@@ -72,6 +73,11 @@ async function createNewList(name:string) {
     throw await resp.text();
 }
 
+function ParsegraphElement({children}:{children:any[]|any}) {
+    const childArray = React.Children.toArray(children);
+    return <element key="form" connect="downward" content={()=>childArray[0]}>{childArray.slice(1)}</element>
+}
+
 export function AllLists() {
     const [lists, setLists] = useState([]);
     const [newListName, setNewListName] = useState("");
@@ -104,22 +110,26 @@ export function AllLists() {
         .catch(setError);
     };
 
+    console.log("Re-rendering new list form with name " + newListName);
     return <div>
         <h1>Lists</h1>
-        {error && <div className="alert alert-danger fade show">
-            <strong>Error creating list!</strong> {error}
-        </div>}
-        <form onSubmit={submit}>
-            <div className="mb-3">
-                <label htmlFor="new-list-name" className="form-label">New list name</label>
-                <input type="text" className="form-control" id="new-list-name" value={newListName} onChange={e=>setNewListName(e.target.value)}/>
-            </div>
-            <button type="submit" className="btn btn-primary">Create new list</button>
-        </form>
         <Parsegraph display="inline">
-            <bud connect="downward" align="center">
+            <ParsegraphElement>
+                <div>hey</div>
+                <ParsegraphElement key="form">
+                    <>{error && <div className="alert alert-danger fade show">
+                        <strong>Error creating list!</strong> {error}
+                    </div>}
+                    <form style={{background:"#ccf", padding:"1em"}} onSubmit={submit}>
+                        <div className="mb-3">
+                            <label htmlFor="new-list-name" className="form-label">New list name</label>
+                            <input type="text" className="form-control" id="new-list-name" value={newListName} onChange={e=>setNewListName(e.target.value)}/>
+                        </div>
+                        <button type="submit" className="btn btn-primary">Create new list</button>
+                    </form></>
+                </ParsegraphElement>
                 {lists.map(list=><block dir="forward" key={list} label={list}/>)}
-            </bud>
+            </ParsegraphElement>
         </Parsegraph>
     </div>
 }

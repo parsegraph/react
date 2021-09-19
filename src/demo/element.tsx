@@ -56,7 +56,7 @@ function EmailForm() {
 
 function ElementDemo() {
   return <div style={{width:"100vw", height:"100vh"}}>
-    <Parsegraph display="inline">
+    <Parsegraph>
       <block label="Element demo">
         <element dir="upward" content={()=>
           <ElementForm/>
