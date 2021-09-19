@@ -2,7 +2,7 @@ import React from 'react';
 import {Caret, Window, World, addEventMethod, TimingBelt, Node, DefaultNodeType, Viewport} from 'parsegraph-node';
 import { Alignment, readAlignment } from 'parsegraph-layout';
 
-import Direction, {readDirection, nameDirection} from 'parsegraph-direction';
+import Direction, {readDirection, nameDirection, reverseDirection} from 'parsegraph-direction';
 import ReactDOM from 'react-dom';
 import Color from 'parsegraph-color';
 
@@ -20,6 +20,8 @@ const NO_CONTEXT = {};
 
 import Reconciler from 'react-reconciler';
 import WindowNode from 'parsegraph-node/dist/WindowNode';
+
+let lastFocusedNode:Direction[] = [];
 
 class RenderNode {
   node:Node<DefaultNodeType>|null;
@@ -245,21 +247,33 @@ const hostConfig = {
         break;
       case "content":
         if (type === "element") {
+          console.log("Content is being updated!")
           const contentFunc = props.content;
-          node.node.setElement(()=>{
-            const container = document.createElement('div');
+          const render = (container:HTMLElement)=>{
             ReactDOM.render(contentFunc(), container, ()=>{
               new ResizeObserver(()=>{
                 node.node.layoutHasChanged();
               }).observe(container);
             });
-            return container;
-          });
+          };
+          if (!node.node._element) {
+            node.node.setElement(()=>{
+              const container = document.createElement('div');
+              render(container);
+              node.node.layoutHasChanged();
+              return container;
+            });
+          } else {
+            node.node._windowElement.forEach((elem, comp)=>{
+              comp.scheduleUpdate();
+              render(elem);
+            });
+            node.node.layoutHasChanged();
+          }
           /*node.node._windowElement.forEach(elem=>{
             elem.remove();
           });
           node.node._windowElement.clear();*/
-          node.node.layoutHasChanged();
         }
         break;
       }
@@ -302,18 +316,43 @@ const hostConfig = {
     return instance;
   },
 
-  prepareForCommit(containerInfo:any):any {
-    console.log("prepareForCommit", arguments);
-    return null;
-  },
-
   commitTextUpdate(node:RenderNode, oldLabel:string, newLabel:string):any {
     console.log("CommitTextUpdate", arguments)
     node.node && node.node.setLabel(newLabel);
   },
 
+  prepareForCommit(viewport:Viewport):any {
+    console.log("Preparing for commit", arguments);
+    lastFocusedNode = [];
+    if (viewport._nodeShown) {
+      let node = viewport._nodeShown;
+      while (!node.isRoot()) {
+        lastFocusedNode.push(reverseDirection(node.parentDirection()));
+        node = node.parentNode();
+      }
+    }
+    return null;
+  },
+
   resetAfterCommit(viewport:Viewport) {
     console.log("resetAfterCommit");
+
+    let shownRoot = viewport._nodeShown;
+    while(shownRoot && !shownRoot.isRoot()) {
+      shownRoot = shownRoot.parentNode();
+    }
+    if (!shownRoot || shownRoot != viewport.world()._worldRoots[0]) {
+      console.log("Scene lost focus!");
+      let node = viewport.world()._worldRoots[0];
+      for(let i = 0; i < lastFocusedNode.length; ++i) {
+        let dir = lastFocusedNode[i];
+        if (!node.hasNode(dir)) {
+          break;
+        }
+        node = node.nodeAt(dir);
+      }
+      viewport.showInCamera(node);
+    }
     viewport.scheduleRepaint();
     viewport.world().scheduleRepaint();
   },
