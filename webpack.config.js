@@ -18,7 +18,8 @@ module.exports = {
   entry: {
     main:path.resolve(__dirname, "src/index.ts"),
     element:path.resolve(__dirname, "src/demo/element.tsx"),
-    iframes:path.resolve(__dirname, "src/demo/iframes.tsx")
+    iframes:path.resolve(__dirname, "src/demo/iframes.tsx"),
+    todo:path.resolve(__dirname, "src/demo/todo.tsx")
   },
   output: {
     path: path.resolve(__dirname, "dist"),
